@@ -96,6 +96,7 @@
     <PostBuildEvent>COPY /Y $(ProjectDir)bin\x86\$(ConfigurationName)\$(TargetFileName) $(ProjectDir)bin\$(ConfigurationName)\Zbx1425.$(TargetName)-net35.dll
 COPY /Y $(ProjectDir)bin\x64\$(ConfigurationName)\$(TargetFileName) $(ProjectDir)bin\$(ConfigurationName)\Zbx1425.$(TargetName)-net48.dll
 
-COPY /Y $(ProjectDir)bin\$(ConfigurationName)\Zbx1425.$(TargetName)-net35.dll F:\SharedUserWorkData\Documents\BveTs\Scenarios\zbx1425</PostBuildEvent>
+COPY /Y $(ProjectDir)bin\$(ConfigurationName)\Zbx1425.$(TargetName)-net35.dll F:\SharedUserWorkData\Documents\BveTs\Scenarios\zbx1425
+COPY /Y $(ProjectDir)bin\$(ConfigurationName)\Zbx1425.$(TargetName)-net48.dll F:\SharedUserWorkData\Documents\BveTs\Scenarios\zbx1425</PostBuildEvent>
   </PropertyGroup>
 </Project>

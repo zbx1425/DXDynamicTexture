@@ -113,7 +113,7 @@ Now compile the plugin and start the game, to see if there are any errors.
 
 If you have problems during the setup, feel free to contact me via email or twitter.
 
-## Usage
+## Dynamic Texture
 
 Here's an example. (Not the complete source code, only the important functions)
 
@@ -126,7 +126,7 @@ private static string dllParentPath = Path.GetDirectoryName(System.Reflection.As
 [DllExport(CallingConvention.StdCall)]
 public static void Load() {
     TextureManager.Initialize();
-    hTex = TextureManager.Register("clock_back_tex.png", 128, 128, 5);
+    hTex = TextureManager.Register("clock_back_tex.png", 128, 128);
     gClock = new GDIHelper(128, 128);
     imgClock = new Bitmap(Path.Combine(dllParentPath, "clock_back.png"));
 }
@@ -143,7 +143,7 @@ public static AtsHandles Elapse(AtsVehicleState state, IntPtr hPanel, IntPtr hSo
     var panel = new AtsIoArray(hPanel); var sound = new AtsIoArray(hSound);
     if (hTex.IsCreated) {
         panel[100] = 0;
-        if (hTex.ShouldUpdate(state.Time)) {
+        if (hTex.ShouldUpdate(state.Time, 5)) {
             gClock.BeginGDI();
             gClock.DrawImage(imgClock, 0, 0);
             gClock.EndGDI();
@@ -166,7 +166,7 @@ This replaces a texture called "clock_back_tex.png" in the world, then draws "cl
 
 Now we'll explain how it works.
 
-- TextureManager.Register(*texturePathSuffix*, *width*, *height*, *[fps]*);
+- TextureManager.Register(*texturePathSuffix*, *width*, *height*);
 
   Schedules to try locating a texture file while the scenario loads. Returns a TextureHandle. If the texture is successfully located, IsCreated (`hTex.IsCreated` in this case) will be true.
   You should call `Register` in the Load event, then check `IsCreated` in the Tick event.
@@ -176,9 +176,7 @@ Now we'll explain how it works.
 
   - texturePathSuffix: A part of the path of the texture in scenraio you want to replace. For example, for `....../Scenario/shuttle/hrd/structures/back_a.png` you should use `shuttle/hrd/structures/back_a.png`.
   - width, height: The size of the new texture. Width and Height needs to be a power of 2. Don't need to be the same as the original texture.
-  - fps: Optional. Limits the update interval to that amount of times per second. Because replacing texture is a costy process, it is recommended to update as less frequent as possible.
-    This only affects the result of `ShouldUpdate(state.Time)`, so make sure you use that to check if you should update the texture now. 
-
+  
 - new GDIHelper(*width*, *height*);
   You can use a System.Drawing.Bitmap to replace the texture directly. But since drawing things directly on Bitmap is a bit difficult, I made this GDIHelper class to help. You can create a GDIHelper for each texture, with the same size as that texture. This acts as a buffer image on which you perform all these drawing.
 
@@ -199,6 +197,12 @@ Now we'll explain how it works.
 
   Don't use `GDIHelper.Graphics` between `BeginGDI()` and `EndGDI()`, and don't use `GDIHelper.DrawImage` and `GDIHelper.FillRectxx` outside `BeginGDI()` and `EndGDI()`.
 
+- TextureHandle.ShouldUpdate(*time*, *fps*)
+
+  Limits the update interval to that amount of times per second. Because replacing texture is a costy process, it is recommended to update as less frequent as possible.
+
+  This just checks "Has sufficient time passed since the last update?", you can call Update directly to force an update anyway.
+
 - TextureHandle.Update(*gdiHelper or bitmap*)
 
   Pushes the content in a GDIHelper or Bitmap to your video card, updating its texture in game.
@@ -207,3 +211,46 @@ Now we'll explain how it works.
 - TextureManager.Dispose()
 
   Don't forget to release all resources when the plugin unloads.
+
+## Touching
+
+Here's an example. (Not the complete source code, only the important functions)
+
+```csharp
+private static TouchTextureHandle hTIMSTex;
+
+[DllExport(CallingConvention.StdCall)]
+public static void Load(){
+    TextureManager.Initialize();
+    hTIMSTex = TouchManager.Register("foo/bar/tims_placeholder.png", 512, 512);
+    hTIMSTex.SetClickableArea(0, 0, 400, 300);
+    TouchManager.EnableEvent(MouseButtons.Left, TouchManager.EventType.Down);
+    hTIMSTex.MouseDown += HTIMSTex_MouseDown;
+}
+
+private static void HTIMSTex_MouseDown(object sender, TouchEventArgs e) {
+    MessageBox.Show(String.Format("X: {0}, Y: {1}", e.X, e.Y));
+}
+```
+
+The registration is more or less the same. The difference is that you use `TouchManager.Register` and it returns a `TouchTextureHandle`. TouchTextureHandle is also a TextureHandle so you can do these dynamic texture things on it too.
+
+You cannot register a file both at TouchManager and TextureManager. (TouchManager.Register also does the things TextureManager.Register does, so why)
+
+Because it depends on the color to detect the position, please make sure this texture does not change its brightness due to CabIlluminance (Set the same DaytimeImage and NighttimeImage in panel file).
+
+- TouchTextureHandle.SetClickableArea(*x0*, *y0*, *width*, *height*)
+
+  Maybe only a part of your texture is clickable (For example, your screen just takes up a part of your texture), so you can specify your clickable area here. If not specified, the entire texture will be clickable.
+
+- TouchManager.EnableEvent(*button*, *type*)
+
+  Because handling all these events can result in some intense blinking, you can choose what kinds of events you want to handle here. For example, `TouchManager.EnableEvent(MouseButtons.Left, TouchManager.EventType.Down);` Only handles when the left mouse button is pressed.
+
+  Add a reference to `System.Windows.Forms`   and `using System.Windows.Forms;` if you can't use `MouseButtons`.
+
+- TouchTextureHandle.MouseDown += *handler*, TouchTextureHandle.MouseUp += *handler*
+
+  Register a event handler function to be called when it's clicked.
+
+  `e.X` and `e.Y` is the position of the mouse, in pixels, relative to the top-left point of the texture's clickable area. 

@@ -28,7 +28,7 @@ namespace Zbx1425.DXDynamicTexture {
 
             TouchManager.Initialize();
         }
-
+        
         private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args) {
             if (args.Name.Contains("Harmony")) {
                 if (DllDir == null) DllDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
