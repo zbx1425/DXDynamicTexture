@@ -11,22 +11,22 @@ namespace Zbx1425.DXDynamicTexture {
     public class GDIHelper : IDisposable {
 
         [DllImport("gdi32")]
-        private static extern IntPtr CreateCompatibleDC([In] IntPtr hdc);
+        internal static extern IntPtr CreateCompatibleDC([In] IntPtr hdc);
         [DllImport("gdi32")]
-        private static extern int SelectObject([In] IntPtr hdc, [In] IntPtr hObject);
+        internal static extern int SelectObject([In] IntPtr hdc, [In] IntPtr hObject);
         [DllImport("gdi32")]
-        private static extern int DeleteDC([In] IntPtr hdc);
+        internal static extern int DeleteDC([In] IntPtr hdc);
         [DllImport("gdi32")]
-        private static extern int DeleteObject([In] IntPtr hObject);
+        internal static extern int DeleteObject([In] IntPtr hObject);
         [DllImport("gdi32")]
-        public static extern int BitBlt([In] IntPtr hDestDC, int x, int y, int nWidth, int nHeight,
+        internal static extern int BitBlt([In] IntPtr hDestDC, int x, int y, int nWidth, int nHeight,
             [In] IntPtr hSrcDC, int xSrc, int ySrc, int dwRop);
-        private const int SRCCOPY = 0xCC0020;
+        internal const int SRCCOPY = 0xCC0020;
         
         [DllImport("gdi32")]
-        private static extern int Rectangle([In] IntPtr hdc, int X1, int Y1, int X2, int Y2);
+        internal static extern int Rectangle([In] IntPtr hdc, int X1, int Y1, int X2, int Y2);
         [DllImport("gdi32")]
-        private static extern IntPtr CreateSolidBrush(int crColor);
+        internal static extern IntPtr CreateSolidBrush(int crColor);
 
         public struct HBitmap {
             public Bitmap img;

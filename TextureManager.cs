@@ -11,10 +11,12 @@ namespace Zbx1425.DXDynamicTexture {
 
     public static class TextureManager {
 
-        private static Harmony Harmony = new Harmony("cn.zbx1425.dxdynamictexture");
-        private static Dictionary<string, TextureHandle> Handles = new Dictionary<string, TextureHandle>();
+        internal static Harmony Harmony = new Harmony("cn.zbx1425.dxdynamictexture");
+        internal static Dictionary<string, TextureHandle> Handles = new Dictionary<string, TextureHandle>();
 
-        private static string DllDir;
+        internal static string DllDir;
+
+        internal static Device DXDevice;
 
         public static void Initialize() {
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
@@ -23,6 +25,8 @@ namespace Zbx1425.DXDynamicTexture {
                 .FirstOrDefault(),
                 null, new HarmonyMethod(typeof(TextureManager), "FromFilePostfix")
             );
+
+            TouchManager.Initialize();
         }
 
         private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args) {
@@ -44,21 +48,22 @@ namespace Zbx1425.DXDynamicTexture {
                     __result = Handles[item.Key].GetOrCreate(device);
                 }
             }
+            DXDevice = device;
         }
 
-        public static TextureHandle Register(string fileNameEnding, int width, int height, double fps = 0) {
+        public static TextureHandle Register(string fileNameEnding, int width, int height) {
             if (fileNameEnding.Trim().Length == 0) throw new ArgumentException("Must not be empty.", "fileNameEnding");
-            if (!isPowerOfTwo(width)) throw new ArgumentException("Must be a integral power of 2.", "width");
-            if (!isPowerOfTwo(height)) throw new ArgumentException("Must be a integral power of 2.", "height");
+            if (!IsPowerOfTwo(width)) throw new ArgumentException("Must be a integral power of 2.", "width");
+            if (!IsPowerOfTwo(height)) throw new ArgumentException("Must be a integral power of 2.", "height");
 
             fileNameEnding = fileNameEnding.ToLowerInvariant().Replace('\\', '/');
             if (Handles.ContainsKey(fileNameEnding)) return Handles[fileNameEnding];
-            var result = new TextureHandle(width, height, fps);
+            var result = new TextureHandle(width, height);
             Handles.Add(fileNameEnding, result);
             return result;
         }
 
-        private static bool isPowerOfTwo(int x) {
+        internal static bool IsPowerOfTwo(int x) {
             return (x & (x - 1)) == 0;
         }
 

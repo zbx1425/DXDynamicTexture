@@ -10,21 +10,21 @@ using System.Text;
 namespace Zbx1425.DXDynamicTexture {
 
     public class TextureHandle : IDisposable {
-        
+
         public bool IsCreated {
             get {
                 return DXTexture != null;
             }
         }
         public SurfaceDescription Description { get; private set; }
-        private readonly int Width, Height;
-        private readonly int IntendedInterval;
+        public readonly int Width, Height;
+
+        public event EventHandler Created;
 
         private int lastUpdateTime = 0;
 
-        internal TextureHandle(int width, int height, double intendedFPS) {
+        internal TextureHandle(int width, int height) {
             this.Width = width; this.Height = height;
-            this.IntendedInterval = intendedFPS == 0 ? 0 : Convert.ToInt32(1000.0 / intendedFPS);
         }
 
         private Texture _DXTexture;
@@ -47,6 +47,7 @@ namespace Zbx1425.DXDynamicTexture {
             if (rect.Data.CanWrite) rect.Data.WriteRange(bmpData.Scan0, rect.Pitch * Description.Height);
             bmp.UnlockBits(bmpData);
             DXTexture.UnlockRectangle(0);
+            lastUpdateTime = ingameTime;
         }
 
         public void Update(GDIHelper helper) {
@@ -57,7 +58,10 @@ namespace Zbx1425.DXDynamicTexture {
             if (helper.HasAcquiredHDC())
                 throw new InvalidOperationException("You must call EndGDI() on the GDIHelper before updating.");
             Update(helper.Bitmap);
+            lastUpdateTime = ingameTime;
         }
+
+        private static int ingameTime = 0;
         
         public void Update(byte[] data) {
             if (DXTexture == null || data == null) return;
@@ -67,15 +71,20 @@ namespace Zbx1425.DXDynamicTexture {
             if (rect.Data.CanWrite) rect.Data.WriteRange(pinnedArray.AddrOfPinnedObject(), data.Length);
             pinnedArray.Free();
             DXTexture.UnlockRectangle(0);
+            lastUpdateTime = ingameTime;
         }
 
-        public bool ShouldUpdate(int time) {
-            return IntendedInterval == 0 || lastUpdateTime > time || time - lastUpdateTime > IntendedInterval;
+        public bool ShouldUpdate(int time, double intendedFPS) {
+            int IntendedInterval = intendedFPS == 0 ? 0 : Convert.ToInt32(1000.0 / intendedFPS);
+            bool result = IntendedInterval == 0 || lastUpdateTime > time || time - lastUpdateTime > IntendedInterval;
+            ingameTime = time;
+            return result;
         }
 
         internal Texture GetOrCreate(Device device) {
             if (IsCreated) return DXTexture;
             DXTexture = new Texture(device, Width, Height, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
+            Created?.Invoke(this, new EventArgs());
             return DXTexture;
         }
 
