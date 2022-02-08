@@ -11,15 +11,19 @@ namespace Zbx1425.DXDynamicTexture {
 
     public static class TextureManager {
 
-        internal static Harmony Harmony = new Harmony("cn.zbx1425.dxdynamictexture");
+        internal static Harmony Harmony;
         internal static Dictionary<string, TextureHandle> Handles = new Dictionary<string, TextureHandle>();
 
         internal static string DllDir;
 
         internal static Device DXDevice;
 
-        public static void Initialize() {
+        static TextureManager() {
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+        }
+
+        public static void Initialize() {
+            Harmony = new Harmony("cn.zbx1425.dxdynamictexture");
             Harmony.Patch(typeof(Texture).GetMethods()
                 .Where(m => m.Name == "FromFile" && m.GetParameters().Length == 11)
                 .FirstOrDefault(),
