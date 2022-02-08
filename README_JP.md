@@ -157,7 +157,7 @@ public static AtsHandles Elapse(AtsVehicleState state, IntPtr hPanel, IntPtr hSo
     var panel = new AtsIoArray(hPanel); var sound = new AtsIoArray(hSound);
     if (hTex.IsCreated) {
         panel[100] = 0;
-        if (hTex.ShouldUpdate(state.Time, 5)) {
+        if (hTex.HasEnoughTimePassed(5)) {
             gClock.BeginGDI();
             gClock.DrawImage(imgClock, 0, 0);
             gClock.EndGDI();
@@ -221,17 +221,16 @@ public static AtsHandles Elapse(AtsVehicleState state, IntPtr hPanel, IntPtr hSo
   BeginGDI() メソッドを実行してから EndGDI メソッドを実行するまでの間に GDIHelper.Graphics を使用しないでください。
   また、BeginGDI() メソッドを実行してから EndGDI メソッドを実行するまでの間以外で GDIHelper.DrawImage メソッド、GDIHelper.FillRect から始まる名前のメソッドを使用しないでください。
   
-- TextureHandle.ShouldUpdate(*time*, *fps*)
+- TextureHandle.HasEnoughTimePassed(*fps*)
 
-  `time` で指定した現在時刻を基に、`fps` で指定したフレームレート (テクスチャの更新頻度) の下限を下回っているかを取得します。
-  テクスチャの更新はコストが大きいため、できるだけ頻度を下げることが推奨されます。
+  TextureHandle.Update メソッドによるテクスチャの更新回数を、1 秒当たり `fps` で指定した回数以下に制限するためのメソッドです。更新頻度が指定された値以下であれば true を返します。
 
-  このメソッドは単に「最後の更新からどのくらいの時間が経過したか」を確認しているのみなので、このメソッドを使わず、強制的に更新することもできます。
+  テクスチャの更新はコストが大きいため、できるだけ頻度を下げることを推奨しています。テクスチャの更新は直接 TextureHandle.Update メソッドを呼び出せばいつでも可能ですが、このメソッドを使用することで簡単にテクスチャの更新頻度を制限することができます。
 
 - TextureHandle.Update(*gdiHelper or bitmap*)
 
   ビデオカードに GDIHelper や Bitmap をプッシュし、TextureHandle に紐づけられたゲーム内のテクスチャを更新します。
-  テクスチャの更新はコストが大きいため、更新頻度の最適化のために TextureHandle.ShouldUpdate メソッドを使用することを推奨します。
+  テクスチャの更新はコストが大きいため、更新頻度の最適化のために TextureHandle.HasEnoughTimePassed メソッドを使用することを推奨します。
 
 - TextureManager.Dispose()
 
