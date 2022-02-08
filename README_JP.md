@@ -185,12 +185,12 @@ public static AtsHandles Elapse(AtsVehicleState state, IntPtr hPanel, IntPtr hSo
   シナリオの読込中、`texturePathSuffix` で指定したファイル名の画像からテクスチャが生成されるかどうか監視します。
   戻り値は TextureHandle 型で、テクスチャが生成された場合は TextureHandle.IsCreated プロパティ (コード例の場合は `hTex.IsCreated`) が true になります。 
   
-  このメソッドを Load メソッド内で呼び出し、Started メソッド内か Elapse メソッド内で TextureHandle.IsCreated プロパティを確認してください。
+  このメソッドを Load メソッド内で呼び出し、Elapse メソッド内で TextureHandle.IsCreated プロパティを確認してください。
   
   また、このメソッドは空白のテクスチャで元のテクスチャを置き換えるため注意してください。
   
   BVE のマップを車両より先に読み込む仕様の関係で、運転台パネル内のテクスチャは直接置き換えられる一方、マップ内のテクスチャを置き換えるには一度マップを読み込んだ後再度読み込み直す必要があります。
-  そのため、ゲーム開始時に IsCreated が true になっているか確認し、false であれば、コード例のように利用者に対しシナリオを読み込み直す必要がある旨を表示することを推奨します。
+  そのため、マップ内のテクスチャを置き換えている場合は、ゲーム開始時に IsCreated が true になっているか確認し、false であれば、コード例のように利用者に対しシナリオを読み込み直す必要がある旨を表示することを推奨します。
   
   - texturePathSuffix: 置き換えたいテクスチャのパスの一部。例えば `～～～/Scenarios/shuttle/hrd/structures/back_a.png` を置き換えたい場合は `shuttle/hrd/structures/back_a.png` を指定すると良いでしょう。
   - width, height: 置換後のテクスチャのサイズ。いずれも 2 のべき乗である必要があります。置換元のテクスチャのサイズと合わせる必要はありません。
@@ -266,7 +266,7 @@ TouchTextureHandle は TextureHandle を継承しているため、動的テク�
 
 また、同一のファイルを TouchManager と TextureManager の両方に登録しないでください。TouchManager.Register メソッドには TextureManager.Register メソッドと同一の機能が含まれます。
 
-また、タッチされた位置を色で検出するため、CabIlluminance による運転台の明るさの設定には対応しないことをご了承ください。DaytimeImage と NighttimeImage で同一のファイルを指定してください。
+また、タッチされた位置を色で検出するため、CabIlluminance によってテクスチャの表示色が変わらないようにする必要があります。DaytimeImage と NighttimeImage で同一のファイルを指定してください。
 
 - TouchTextureHandle.SetClickableArea(*x0*, *y0*, *width*, *height*)
 
@@ -279,8 +279,8 @@ TouchTextureHandle は TextureHandle を継承しているため、動的テク�
   イベントを発生させる条件を指定します。
   例えば、`TouchManager.EnableEvent(MouseButtons.Left, TouchManager.EventType.Down);` は左マウス ボタンが押されたときにのみイベントを発生させるように設定します。
 
-  タッチされた位置を一瞬グラデーションを表示して検出するという本ライブラリの仕様上、全てのマウス動作に対してイベントを発生させると高頻度な点滅が発生することとなり、見栄えが悪くなってしまいます。
-  これを防ぐために、このメソッドでイベントを発生させる条件を指定することができるようにしています。
+  タッチされた位置を一瞬グラデーションを表示して検出するという本ライブラリの仕様上、全てのマウス動作に対してイベントを発生させると高い頻度で点滅が発生することとなり、見栄えが悪くなってしまいます。
+  これを防ぐために、このメソッドでイベントを発生させる条件を指定できるようにしています。
 
   MouseButtons を使用するには、参照に `System.Windows.Forms` を追加してください。
 
