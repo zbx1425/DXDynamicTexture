@@ -143,7 +143,7 @@ public static AtsHandles Elapse(AtsVehicleState state, IntPtr hPanel, IntPtr hSo
     var panel = new AtsIoArray(hPanel); var sound = new AtsIoArray(hSound);
     if (hTex.IsCreated) {
         panel[100] = 0;
-        if (hTex.ShouldUpdate(state.Time, 5)) {
+        if (hTex.HasEnoughTimePassed(5)) {
             gClock.BeginGDI();
             gClock.DrawImage(imgClock, 0, 0);
             gClock.EndGDI();
@@ -197,20 +197,20 @@ Now we'll explain how it works.
 
   Don't use `GDIHelper.Graphics` between `BeginGDI()` and `EndGDI()`, and don't use `GDIHelper.DrawImage` and `GDIHelper.FillRectxx` outside `BeginGDI()` and `EndGDI()`.
 
-- TextureHandle.ShouldUpdate(*time*, *fps*)
+- TextureHandle.HasEnoughTimePassed(*fps*)
 
   Limits the update interval to that amount of times per second. Because replacing texture is a costy process, it is recommended to update as less frequent as possible.
 
-  This just checks "Has sufficient time passed since the last update?", you can call Update directly to force an update anyway.
+  This just checks "Has sufficient time passed since the last update?", you can call Update directly to update anyway.
 
 - TextureHandle.Update(*gdiHelper or bitmap*)
 
   Pushes the content in a GDIHelper or Bitmap to your video card, updating its texture in game.
-  Make sure you check for `ShouldUpdate` before doing these drawing and calling Update.
+  It is recommended to check for `HasEnoughTimePassed` before doing these drawing and calling Update.
 
 - TextureManager.Dispose()
 
-  Don't forget to release all resources when the plugin unloads.
+  Don't forget to release all resources when the plugin unloads, including all the images that you loaded and all the `GDIHelper`s.
 
 ## Touching
 
@@ -243,6 +243,8 @@ Because it depends on the color to detect the position, please make sure this te
 
   Maybe only a part of your texture is clickable (For example, your screen just takes up a part of your texture), so you can specify your clickable area here. If not specified, the entire texture will be clickable.
 
+  When handling click events, the clickable area will blink (because it depends on color to detect the position). So setting a smaller area (if you don't require a very large one) means a smaller area will blink, and might look better.
+
 - TouchManager.EnableEvent(*button*, *type*)
 
   Because handling all these events can result in some intense blinking, you can choose what kinds of events you want to handle here. For example, `TouchManager.EnableEvent(MouseButtons.Left, TouchManager.EventType.Down);` Only handles when the left mouse button is pressed.
@@ -253,4 +255,4 @@ Because it depends on the color to detect the position, please make sure this te
 
   Register a event handler function to be called when it's clicked.
 
-  `e.X` and `e.Y` is the position of the mouse, in pixels, relative to the top-left point of the texture's clickable area. 
+  `e.X` and `e.Y` is the position of the mouse, in pixels (relative to the size when registering `TouchManager`), relative to the top-left point of the texture's clickable area.
