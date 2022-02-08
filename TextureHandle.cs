@@ -21,7 +21,7 @@ namespace Zbx1425.DXDynamicTexture {
 
         public event EventHandler Created;
 
-        private int lastUpdateTime = 0;
+        private long lastUpdateTime = 0;
 
         internal TextureHandle(int width, int height) {
             this.Width = width; this.Height = height;
@@ -47,7 +47,7 @@ namespace Zbx1425.DXDynamicTexture {
             if (rect.Data.CanWrite) rect.Data.WriteRange(bmpData.Scan0, rect.Pitch * Description.Height);
             bmp.UnlockBits(bmpData);
             DXTexture.UnlockRectangle(0);
-            lastUpdateTime = ingameTime;
+            lastUpdateTime = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
         }
 
         public void Update(GDIHelper helper) {
@@ -58,10 +58,8 @@ namespace Zbx1425.DXDynamicTexture {
             if (helper.HasAcquiredHDC())
                 throw new InvalidOperationException("You must call EndGDI() on the GDIHelper before updating.");
             Update(helper.Bitmap);
-            lastUpdateTime = ingameTime;
+            lastUpdateTime = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
         }
-
-        private static int ingameTime = 0;
         
         public void Update(byte[] data) {
             if (DXTexture == null || data == null) return;
@@ -71,13 +69,19 @@ namespace Zbx1425.DXDynamicTexture {
             if (rect.Data.CanWrite) rect.Data.WriteRange(pinnedArray.AddrOfPinnedObject(), data.Length);
             pinnedArray.Free();
             DXTexture.UnlockRectangle(0);
-            lastUpdateTime = ingameTime;
+            lastUpdateTime = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
         }
 
+        [Obsolete("Use HasEnoughTimePassed instead.")]
         public bool ShouldUpdate(int time, double intendedFPS) {
+            return HasEnoughTimePassed(intendedFPS);
+        }
+
+        public bool HasEnoughTimePassed(double intendedFPS) {
             int IntendedInterval = intendedFPS == 0 ? 0 : Convert.ToInt32(1000.0 / intendedFPS);
-            bool result = IntendedInterval == 0 || lastUpdateTime > time || time - lastUpdateTime > IntendedInterval;
-            ingameTime = time;
+            long currentTime = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
+
+            bool result = IntendedInterval == 0 || lastUpdateTime > currentTime || currentTime - lastUpdateTime > IntendedInterval;
             return result;
         }
 
