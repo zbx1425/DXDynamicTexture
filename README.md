@@ -8,7 +8,12 @@ Allows the ATS plugin to update in-game texture dynamically. Can apply to panel 
 
 You must write your Plugin with C# and DllExport instead of C++. See Mr.Rock_On's example at https://github.com/mikangogo/BveAtsPluginCsharpTemplate.
 
-This requires you to have a general knowledge of the C# programming language.
+DllExport can be installed via Nuget. You should see a dialog when installing, where you should select your project. If you accidentally skipped it when installing, you can use `DllExport.bat -action Configure`.
+
+- [Quick start · 3F/DllExport Wiki (github.com)](https://github.com/3F/DllExport/wiki/Quick-start)
+- [.NET DllExport. Various scenarios (Configuring, Automatic restoring, Pe-Viewer) - YouTube](https://www.youtube.com/watch?v=sBWt-KdQtoc)
+
+Using DXDynamicTexture requires you to have a general knowledge of the C# programming language.
 
 ## Set up your project
 
@@ -77,6 +82,8 @@ Reload the project and set up DllExport normally if you haven't, and you can now
 ## Importing DXDynamicTexture
 
 Download the DLLs from the release section and add `Zbx1425.DXDynamicTexture-net35.dll` to your project reference.
+
+**You don't need to and probably shouldn't manually copy `0Harmony.dll` to BVE's installation directory.**
 
 Add these to your main class: (Replace AtsMain with something else if you changed the class name)
 

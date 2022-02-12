@@ -9,7 +9,9 @@ ATS プラグインからゲーム内のテクスチャを動的に変更でき�
 
 - プラグインは C++ ではなく C# + DllExport で作成する必要があります。
   C# での ATS プラグインの作成には、Rock_On 氏の [BveAtsPluginCsharpTemplate](https://github.com/mikangogo/BveAtsPluginCsharpTemplate) が便利です。
-
+- DllExportはNugetからインストールできます。 インストール時にダイアログが表示され、プロジェクトを選択する必要があります。 インストール時に誤ってスキップした場合は、 `DllExport.bat -actionConfigure`を使用できます。
+  - [Quick start · 3F/DllExport Wiki (github.com)](https://github.com/3F/DllExport/wiki/Quick-start)
+  - [.NET DllExport. Various scenarios (Configuring, Automatic restoring, Pe-Viewer) - YouTube](https://www.youtube.com/watch?v=sBWt-KdQtoc)
 - ライブラリの使用にはC#の基本的な知識が必要です。
 
 ## プロジェクトのセットアップ
@@ -80,6 +82,8 @@ BVE 5 向けのプラグインを .NET Framework 3.5 + x86 (32bit)、BVE 6 向�
 ## DXDynamicTexture のインポート
 
 Releases から DLL をダウンロードし、プロジェクトの参照に `Zbx1425.DXDynamicTexture-net35.dll` を追加します。
+
+**`0Harmony.dll`をBVEのインストールディレクトリに手動でコピーする必要はなく、おそらく手動でコピーするべきではありません。**
 
 メインのクラスに以下のコードを追加します。クラス名を変更している場合は、コード内の AtsMain は新しいクラス名に書きかえます。
 
