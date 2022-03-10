@@ -117,9 +117,11 @@ public static class AtsMain {
 
 [DllExport(CallingConvention.StdCall)]
 public static void Load() {
-    TextureManager.Initialize();
+    TextureManager.Initialize(true);
 }
 ```
+
+TextureManager.Initialize メソッドのパラメータに true が指定されていますが、これはマップ内のテクスチャなど、このメソッドを実行する時点で既に読み込まれたテクスチャを後から置き換えるかどうかを指定するものです。省略した場合は true として処理されます。
 
 ここまで完了したら、ATS プラグインをコンパイルして BVE から読み込み、エラーが発生しないことを確認してください。
 
@@ -143,7 +145,7 @@ private static string dllParentPath = Path.GetDirectoryName(System.Reflection.As
 
 [DllExport(CallingConvention.StdCall)]
 public static void Load() {
-    TextureManager.Initialize();
+    TextureManager.Initialize(true);
     hTex = TextureManager.Register("clock_back_tex.png", 128, 128);
     gClock = new GDIHelper(128, 128);
     imgClock = new Bitmap(Path.Combine(dllParentPath, "clock_back.png"));
@@ -184,7 +186,7 @@ public static AtsHandles Elapse(AtsVehicleState state, IntPtr hPanel, IntPtr hSo
 
 ここからこのコードの解説をしていきます。
 
-- TextureManager.Register(texturePathSuffix*, width*, *height*);
+- TextureManager.Register(*texturePathSuffix*, *width*, *height*);
 
   シナリオの読込中、`texturePathSuffix` で指定したファイル名の画像からテクスチャが生成されるかどうか監視します。
   戻り値は TextureHandle 型で、テクスチャが生成された場合は TextureHandle.IsCreated プロパティ (コード例の場合は `hTex.IsCreated`) が true になります。 
@@ -193,8 +195,8 @@ public static AtsHandles Elapse(AtsVehicleState state, IntPtr hPanel, IntPtr hSo
   
   また、このメソッドは空白のテクスチャで元のテクスチャを置き換えるため注意してください。
   
-  BVE のマップを車両より先に読み込む仕様の関係で、運転台パネル内のテクスチャは直接置き換えられる一方、マップ内のテクスチャを置き換えるには一度マップを読み込んだ後再度読み込み直す必要があります。
-  そのため、マップ内のテクスチャを置き換えている場合は、ゲーム開始時に IsCreated が true になっているか確認し、false であれば、コード例のように利用者に対しシナリオを読み込み直す必要がある旨を表示することを推奨します。
+  BVE のマップを車両より先に読み込む仕様の関係で、運転台パネル内のテクスチャは直接置き換えられる一方、マップ内のテクスチャは既に読込済のため直接置き換えることができません。TextureManager.Initialize メソッドのパラメータに true を指定するか省略すると、既に読み込まれたテクスチャも後から置き換えることができます。  
+  TextureManager.Initialize メソッドのパラメータに false を指定した、BVE の内部実装が大幅に変更され置換処理が正常に実行できなかったなどの理由でテクスチャが置き換えられなかった場合は、IsCreated プロパティが false になります。ゲーム開始時に IsCreated が true になっているか確認し、false であれば、コード例のように利用者に対しシナリオを読み込み直す必要がある旨を表示することを推奨します。
   
   - texturePathSuffix: 置き換えたいテクスチャのパスの一部。例えば `～～～/Scenarios/shuttle/hrd/structures/back_a.png` を置き換えたい場合は `shuttle/hrd/structures/back_a.png` を指定すると良いでしょう。
   - width, height: 置換後のテクスチャのサイズ。いずれも 2 のべき乗である必要があります。置換元のテクスチャのサイズと合わせる必要はありません。
@@ -253,7 +255,7 @@ private static TouchTextureHandle hTIMSTex;
 
 [DllExport(CallingConvention.StdCall)]
 public static void Load(){
-    TextureManager.Initialize();
+    TextureManager.Initialize(true);
     hTIMSTex = TouchManager.Register("foo/bar/tims_placeholder.png", 512, 512);
     hTIMSTex.SetClickableArea(0, 0, 400, 300);
     TouchManager.EnableEvent(MouseButtons.Left, TouchManager.EventType.Down);

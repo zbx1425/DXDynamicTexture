@@ -114,9 +114,12 @@ Next, in your Load() function,initialize the TextureManager (you need to `using 
 ```csharp
 [DllExport(CallingConvention.StdCall)]
 public static void Load() {
-    TextureManager.Initialize();
+    TextureManager.Initialize(true);
 }
 ```
+
+The TextureManager.Initialize method parameter specifies whether to replace textures that are "registered" at the time this method is executed, such as textures in the map.  
+The parameter can also be omitted, in which case it is assumed to be true.
 
 Now compile the plugin and start the game, to see if there are any errors.
 
@@ -134,7 +137,7 @@ private static string dllParentPath = Path.GetDirectoryName(System.Reflection.As
 
 [DllExport(CallingConvention.StdCall)]
 public static void Load() {
-    TextureManager.Initialize();
+    TextureManager.Initialize(true);
     hTex = TextureManager.Register("clock_back_tex.png", 128, 128);
     gClock = new GDIHelper(128, 128);
     imgClock = new Bitmap(Path.Combine(dllParentPath, "clock_back.png"));
@@ -181,8 +184,9 @@ Now we'll explain how it works.
   You should call `Register` in the Load event, then check `IsCreated` in the Tick event.
   It locates and replaces a texture file (discarding its content) with a new blank texture.
 
-  Due to limitations, textures on the train panel can be located directly, but textures outside in the scenario map requires the player close and reopen the scenario to be located. So you should check if your texture has `IsCreated` in `Tick`, and if not, show a tip message on the panel to remind the player to close and reopen the scenario.
-
+  Due to limitations, textures on the train panel can be located directly, but textures in the map requires another way to be located; set the TextureManager.Initialize method parameter to true or omit it. This will enable the option to allow textures that are "registered" at the time TextureManager.Initialize is executed (e.g., textures in the map) to be replaced.  
+  If TextureManager fails locating the texture, the IsCreated property will be false. You should check if your texture has `IsCreated` in `Tick`, and if not, show a tip message on the panel to remind the player to close and reopen the scenario.
+  
   - texturePathSuffix: A part of the path of the texture in scenraio you want to replace. For example, for `....../Scenario/shuttle/hrd/structures/back_a.png` you should use `shuttle/hrd/structures/back_a.png`.
   - width, height: The size of the new texture. Width and Height needs to be a power of 2. Don't need to be the same as the original texture.
   
@@ -230,7 +234,7 @@ private static TouchTextureHandle hTIMSTex;
 
 [DllExport(CallingConvention.StdCall)]
 public static void Load(){
-    TextureManager.Initialize();
+    TextureManager.Initialize(true);
     hTIMSTex = TouchManager.Register("foo/bar/tims_placeholder.png", 512, 512);
     hTIMSTex.SetClickableArea(0, 0, 400, 300);
     TouchManager.EnableEvent(MouseButtons.Left, TouchManager.EventType.Down);
