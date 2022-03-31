@@ -35,14 +35,19 @@ namespace Zbx1425.DXDynamicTexture {
 
                 private FieldInfo MeshField;
                 public Mesh Mesh {
-                    get => (Mesh)MeshField.GetValue(Src);
+                    get => MeshField.GetValue(Src) as Mesh;
                 }
 
                 private FieldInfo MaterialInfosField;
                 public BveMaterialInfoClassWrapper[] MaterialInfos {
-                    get => ((object[])MaterialInfosField.GetValue(Src))
-                        .Select(material => new BveMaterialInfoClassWrapper(material))
-                        .ToArray();
+                    get {
+                        object[] objs = MaterialInfosField.GetValue(Src) as object[];
+                        BveMaterialInfoClassWrapper[] result = new BveMaterialInfoClassWrapper[objs.Length];
+                        for (int i = 0; i < objs.Length; i++) {
+                            result[i] = new BveMaterialInfoClassWrapper(objs[i]);
+                        }
+                        return result;
+                    }
                 }
             }
 
@@ -66,7 +71,7 @@ namespace Zbx1425.DXDynamicTexture {
 
                 private FieldInfo TextureField;
                 public Texture Texture {
-                    get => (Texture)TextureField.GetValue(Src);
+                    get => TextureField.GetValue(Src) as Texture;
                     set => TextureField.SetValue(Src, value);
                 }
             }

@@ -1,5 +1,6 @@
 using SlimDX.Direct3D9;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -31,12 +32,17 @@ namespace Zbx1425.DXDynamicTexture {
 
                 ProgressForm progressForm = new ProgressForm();
                 progressForm.SetWork(() => {
-                    var allChildForms = ForEachMembers(mainForm, new List<object>(0), 0)
-                        .FindAll(obj => obj is Form)
-                        .ConvertAll(obj => (Form)obj);
+                    var simOperationForm = ForEachMembers(mainForm, new List<object>(0), 0)
+                        .Find(f => {
+                            if (f is Form form) {
+                                return form.Name == "SimOperationForm";
+                            } else {
+                                return false;
+                            }
+                        });
 
                     int patchedTextureCount = 0;
-                    ForEachMembers(allChildForms.Find(f => f.Name == "SimOperationForm"), new List<object>(0), 4,
+                    ForEachMembers(simOperationForm, new List<object>(0), 4,
                         obj => {
                             var modelTypeFields = obj.GetType().GetFields(DefaultBindingFlags);
                             bool hasMeshTypeField = modelTypeFields.Any(f => f.FieldType == typeof(Mesh));
@@ -54,9 +60,11 @@ namespace Zbx1425.DXDynamicTexture {
                         }, obj => {
                             var model = new BveModelInfoClassWrapper(obj);
 
-                            var texturePaths = model.Mesh.GetMaterials()
-                                .Select(m => m.TextureFileName)
-                                .ToArray();
+                            var materials = model.Mesh.GetMaterials();
+                            var texturePaths = new string[materials.Length];
+                            for (int i = 0; i < materials.Length; i++) {
+                                texturePaths[i] = materials[i].TextureFileName;
+                            }
 
                             for (int i = 0; i < model.MaterialInfos.Length; i++) {
                                 Texture texture = TryPatch(texturePaths[i]);
@@ -90,19 +98,34 @@ namespace Zbx1425.DXDynamicTexture {
                     var parentType = parent.GetType();
                     var fields = parentType.GetFields(DefaultBindingFlags);
 
-                    var unrecognizedObjs = fields
-                        .Where(f => IsUniqueType(f.FieldType)) // Search only for fields of BVE's unique types; target textures are only instantiated with those fields
-                        .Select(f => f.GetValue(parent))
-                        .Flatten()
-                        .Except(recognizedObjs) // Exclude objects already recognized
-                        .Where(obj => obj != null && obj != parent);
+                    var unrecognizedObjs = new List<object>(fields.Length);
+                    foreach (FieldInfo field in fields) {
+                        // Search only for fields of BVE's unique types; target textures are only instantiated with those fields
+                        if (!IsUniqueType(field.FieldType)) continue;
+                        
+                        object value = field.GetValue(parent);
+                        if (value is IEnumerable<object> array) {
+                            array = array.Flatten();
+                            foreach (object arrayItem in array) {
+                                // Exclude objects already recognized
+                                if (arrayItem == null || recognizedObjs.Contains(arrayItem) || arrayItem == parent) continue;
 
-                    var targetObjs = unrecognizedObjs.Where(targetObjSelector);
-                    if (targetObjs.Any()) {
+                                unrecognizedObjs.Add(arrayItem);
+                            }
+                        } else {
+                            // Exclude objects already recognized
+                            if (value == null || recognizedObjs.Contains(value) || value == parent) continue;
+
+                            unrecognizedObjs.Add(value);
+                        }
+                    }
+
+                    var targetObjs = unrecognizedObjs.FindAll(obj => targetObjSelector(obj));
+                    if (targetObjs.Count > 0) {
                         foreach (var obj in targetObjs) action(obj);
                     }
 
-                    var objs = new List<object>(defaultCapacity <= 0 ? recognizedObjs.Count + unrecognizedObjs.Count() : defaultCapacity);
+                    var objs = new List<object>(defaultCapacity <= 0 ? recognizedObjs.Count + unrecognizedObjs.Count : defaultCapacity);
                     objs.AddRange(recognizedObjs);
                     objs.AddRange(unrecognizedObjs);
 
@@ -110,7 +133,7 @@ namespace Zbx1425.DXDynamicTexture {
                         var childObjs = ForEachMembers(obj, objs, maxNestCount - 1, targetObjSelector, action, defaultCapacity + objs.Count);
                         objs.AddRange(childObjs.Except(objs));
 
-                        if (childObjs.Any()) {
+                        if (childObjs.Count > 0 && (objs.Count & 0b1111) == 0) {
                             int progress = objs.Count / 200;
                             if (progress > 99) progress = 99;
                             progressForm.ReportProgress(progress, objs.Count, null);

@@ -12,17 +12,13 @@ namespace Zbx1425.DXDynamicTexture {
 
     public static class EnumerableExtensions {
 
-        public static IEnumerable<T> ToEnumerable<T>(this T obj) {
-            yield return obj;
-        }
-
         public static IEnumerable<T> Flatten<T>(this IEnumerable<T> src) {
             return src
                 .Select(obj => {
                     if (obj is IEnumerable<T> arrayObj) {
                         return arrayObj.Flatten();
                     } else {
-                        return obj.ToEnumerable();
+                        return new T[1] { obj };
                     }
                 })
                 .SelectMany(x => x);
