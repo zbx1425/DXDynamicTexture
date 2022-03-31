@@ -15,30 +15,38 @@ namespace Zbx1425.DXDynamicTexture {
 
             class BveModelInfoClassWrapper {
 
+                private static bool haveFieldInfosSet = false;
+
                 public object Src { get; }
 
                 public BveModelInfoClassWrapper(object src) {
                     Src = src;
-                    Type type = src.GetType();
-                    FieldInfo[] fields = type.GetFields(DefaultBindingFlags);
-                    MeshField = fields.First(f => f.FieldType == typeof(Mesh));
-                    MaterialInfosField = fields.First(f => {
-                        if (!f.FieldType.IsArray) return false;
 
-                        var materialInfoTypeFields = f.FieldType.GetElementType().GetFields(DefaultBindingFlags);
-                        bool hasMaterialTypeField = materialInfoTypeFields.Any(f2 => f2.FieldType == typeof(Material));
-                        bool hasTextureTypeField = materialInfoTypeFields.Any(f2 => f2.FieldType == typeof(Texture));
+                    if (!haveFieldInfosSet) {
+                        Type type = src.GetType();
+                        FieldInfo[] fields = type.GetFields(DefaultBindingFlags);
 
-                        return hasMaterialTypeField && hasTextureTypeField;
-                    });
+                        MeshField = MeshField ?? fields.First(f => f.FieldType == typeof(Mesh));
+                        MaterialInfosField = MaterialInfosField ?? fields.First(f => {
+                            if (!f.FieldType.IsArray) return false;
+
+                            var materialInfoTypeFields = f.FieldType.GetElementType().GetFields(DefaultBindingFlags);
+                            bool hasMaterialTypeField = materialInfoTypeFields.Any(f2 => f2.FieldType == typeof(Material));
+                            bool hasTextureTypeField = materialInfoTypeFields.Any(f2 => f2.FieldType == typeof(Texture));
+
+                            return hasMaterialTypeField && hasTextureTypeField;
+                        });
+
+                        haveFieldInfosSet = true;
+                    }
                 }
 
-                private FieldInfo MeshField;
+                private static FieldInfo MeshField;
                 public Mesh Mesh {
                     get => MeshField.GetValue(Src) as Mesh;
                 }
 
-                private FieldInfo MaterialInfosField;
+                private static FieldInfo MaterialInfosField;
                 public BveMaterialInfoClassWrapper[] MaterialInfos {
                     get {
                         object[] objs = MaterialInfosField.GetValue(Src) as object[];
@@ -53,23 +61,30 @@ namespace Zbx1425.DXDynamicTexture {
 
             class BveMaterialInfoClassWrapper {
 
+                private static bool haveFieldInfosSet = false;
+
                 public object Src { get; }
 
                 public BveMaterialInfoClassWrapper(object src) {
                     Src = src;
-                    Type type = src.GetType();
-                    FieldInfo[] fields = type.GetFields(DefaultBindingFlags);
-                    MaterialField = fields.FirstOrDefault(f => f.FieldType == typeof(Material));
-                    TextureField = fields.FirstOrDefault(f => f.FieldType == typeof(Texture));
+
+                    if (!haveFieldInfosSet) {
+                        Type type = src.GetType();
+                        FieldInfo[] fields = type.GetFields(DefaultBindingFlags);
+                        MaterialField = fields.FirstOrDefault(f => f.FieldType == typeof(Material));
+                        TextureField = fields.FirstOrDefault(f => f.FieldType == typeof(Texture));
+
+                        haveFieldInfosSet = true;
+                    }
                 }
 
-                private FieldInfo MaterialField;
+                private static FieldInfo MaterialField;
                 public Material Material {
                     get => (Material)MaterialField.GetValue(Src);
                     set => MaterialField.SetValue(Src, value);
                 }
 
-                private FieldInfo TextureField;
+                private static FieldInfo TextureField;
                 public Texture Texture {
                     get => TextureField.GetValue(Src) as Texture;
                     set => TextureField.SetValue(Src, value);
