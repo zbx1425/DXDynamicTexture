@@ -149,6 +149,21 @@ namespace Zbx1425.DXDynamicTexture {
             return result;
         }
 
+        public static TouchTextureHandle Register(Texture texture) {
+            foreach (var item in TextureManager.Handles) {
+                if (item.Value?.DXTexture == texture) return (TouchTextureHandle)item.Value;
+            }
+
+            var result = new TouchTextureHandle(texture);
+            Handles.Add(result);
+            string guidString;
+            do {
+                guidString = Guid.NewGuid().ToString();
+            } while (TextureManager.Handles.ContainsKey(guidString));
+            TextureManager.Handles.Add(guidString, result);
+            return result;
+        }
+
         private static Bitmap screenPixel = new Bitmap(1, 1, PixelFormat.Format32bppArgb);
 
         private static Color GetColorAt(Point location) {
