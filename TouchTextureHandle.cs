@@ -26,12 +26,6 @@ namespace Zbx1425.DXDynamicTexture {
             clickableArea = new Rectangle(0, 0, width, height);
         }
 
-        internal TouchTextureHandle(Texture texture) : base(texture) {
-            tempBufferA = new byte[Width * Height * PIXEL_LEN];
-            tempBufferB = new byte[Width * Height * PIXEL_LEN];
-            clickableArea = new Rectangle(0, 0, Width, Height);
-        }
-
         public void SetClickableArea(int x0, int y0, int width, int height) {
             clickableArea = new Rectangle(x0, y0, width, height);
             Array.Clear(tempBufferB, 0, tempBufferB.Length);

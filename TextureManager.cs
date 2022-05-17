@@ -67,20 +67,6 @@ namespace Zbx1425.DXDynamicTexture {
             return result;
         }
 
-        public static TextureHandle Register(Texture texture) {
-            foreach (var item in Handles) {
-                if (item.Value?.DXTexture == texture) return item.Value;
-            }
-
-            var result = new TextureHandle(texture);
-            string guidString;
-            do {
-                guidString = Guid.NewGuid().ToString();
-            } while (Handles.ContainsKey(guidString));
-            Handles.Add(guidString, result);
-            return result;
-        }
-
         internal static bool IsPowerOfTwo(int x) {
             return (x & (x - 1)) == 0;
         }

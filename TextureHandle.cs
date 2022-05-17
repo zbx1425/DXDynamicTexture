@@ -27,14 +27,6 @@ namespace Zbx1425.DXDynamicTexture {
             this.Width = width; this.Height = height;
         }
 
-        internal TextureHandle(Texture texture) {
-            DXTexture = texture;
-            Description = texture.GetLevelDescription(0);
-            if (Description.Format != Format.A8R8G8B8) throw new NotSupportedException("The format of the texture must be Format.A8R8G8B8.");
-            Width = Description.Width;
-            Height = Description.Height;
-        }
-
         private Texture _DXTexture;
         public Texture DXTexture {
             get {
