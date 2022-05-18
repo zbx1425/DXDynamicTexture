@@ -1,4 +1,3 @@
-using HarmonyLib;
 using SlimDX.Direct3D9;
 using System;
 using System.Collections.Generic;
@@ -9,50 +8,19 @@ using System.Text;
 
 namespace Zbx1425.DXDynamicTexture {
 
-    public static class TextureManager {
+    public static partial class TextureManager {
 
-        internal static Harmony Harmony;
         internal static Dictionary<string, TextureHandle> Handles = new Dictionary<string, TextureHandle>();
 
         internal static string DllDir;
 
         internal static Device DXDevice;
 
-        static TextureManager() {
-            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
-        }
-
-        public static void Initialize() {
-            Harmony = new Harmony("cn.zbx1425.dxdynamictexture");
-            Harmony.Patch(typeof(Texture).GetMethods()
-                .Where(m => m.Name == "FromFile" && m.GetParameters().Length == 11)
-                .FirstOrDefault(),
-                null, new HarmonyMethod(typeof(TextureManager), "FromFilePostfix")
-            );
+        public static void Initialize(bool modifyInstancedTextures = true) {
+            PreInstantiateTexturePatcher.Initialize();
+            if (modifyInstancedTextures) PostInstantiateTexturePatcher.Initialize();
 
             TouchManager.Initialize();
-        }
-        
-        private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args) {
-            if (args.Name.Contains("Harmony")) {
-                if (DllDir == null) DllDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                if (Environment.Version.Major >= 4) {
-                    return Assembly.LoadFile(Path.Combine(DllDir, "Harmony-net48.dll"));
-                } else {
-                    return Assembly.LoadFile(Path.Combine(DllDir, "Harmony-net35.dll"));
-                }
-            }
-            return null;
-        }
-
-        private static void FromFilePostfix(ref Texture __result, Device device, string fileName) {
-            var normalizedName = fileName.Replace('\\', '/').ToLowerInvariant();
-            foreach (var item in Handles) {
-                if (normalizedName.EndsWith(item.Key)) {
-                    __result = Handles[item.Key].GetOrCreate(device);
-                }
-            }
-            DXDevice = device;
         }
 
         public static TextureHandle Register(string fileNameEnding, int width, int height) {
@@ -83,6 +51,21 @@ namespace Zbx1425.DXDynamicTexture {
 
         internal static bool IsPowerOfTwo(int x) {
             return (x & (x - 1)) == 0;
+        }
+
+        private static Texture TryPatch(string fileName) {
+            var normalizedName = fileName.Replace('\\', '/').ToLowerInvariant();
+            foreach (var item in Handles) {
+                if (normalizedName.EndsWith(item.Key)) {
+                    if (Handles[item.Key].IsCreated) {
+                        return null;
+                    } else {
+                        return Handles[item.Key].GetOrCreate(DXDevice);
+                    }
+                }
+            }
+
+            return null;
         }
 
         public static void Dispose() {

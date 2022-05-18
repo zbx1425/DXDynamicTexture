@@ -36,7 +36,7 @@ namespace Zbx1425.DXDynamicTexture {
         internal static void Initialize() {
             try {
                 Form mainForm = Application.OpenForms[0];
-                TextureManager.Harmony.Patch(
+                TextureManager.PreInstantiateTexturePatcher.Harmony.Patch(
                     mainForm.GetType().GetMethod("OnPaint", BindingFlags.NonPublic | BindingFlags.Instance),
                     new HarmonyMethod(typeof(TouchManager), "OnPaintPrefix"),
                     new HarmonyMethod(typeof(TouchManager), "OnPaintPostfix")
